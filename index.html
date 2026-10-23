@@ -1,17 +1,18 @@
 <!doctype html>
-<html lang="ru">
+<html lang="az">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Слепая дегустация кофе</title>
+<title>Qəhvənin kor dequstasiyası</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 :root{
   --bg:#EEF0EC; --surface:#FFFFFF; --ink:#1F1A17; --muted:#6B6660; --line:#D9DBD4;
   --roast:#3B2618; --crema:#C98A4B; --signal:#0F7B6C; --signal-soft:#D7EEE9; --warn:#B4472B;
-  --display:"Unbounded","Golos Text",system-ui,sans-serif;
-  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --display:"Unbounded","Onest",system-ui,sans-serif;
+  --body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
 }
@@ -25,7 +26,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(48px + env(safe-area-inset-bottom,0px))}
 .wrap{max-width:680px;margin:0 auto;display:grid;gap:20px}
-h1{font:700 clamp(22px,5vw,30px)/1.15 var(--display);margin:0;color:var(--roast);text-wrap:balance}
+.view{display:grid;gap:20px}
+h1{font:700 clamp(22px,5vw,30px)/1.2 var(--display);margin:0;color:var(--roast);text-wrap:balance}
 h2{font:600 18px/1.3 var(--display);margin:0;color:var(--roast)}
 .eyebrow{font:600 11px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--signal)}
 .lead{color:var(--muted);margin:6px 0 0;max-width:60ch}
@@ -40,7 +42,7 @@ input:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px soli
 .scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
 .scale button{appearance:none;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;font:600 14px var(--mono);height:40px;min-width:0;padding:0}
 .scale button[aria-pressed="true"]{background:var(--crema);border-color:var(--crema);color:#1F1A17}
-.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.ends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
 .bestgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .cup{appearance:none;cursor:pointer;border:2px solid var(--line);background:var(--bg);border-radius:999px;aspect-ratio:1;max-width:100%;
   display:grid;place-items:center;font:700 clamp(22px,7vw,32px) var(--mono);color:var(--ink)}
@@ -74,97 +76,103 @@ th{font-weight:600;color:var(--muted);font-size:12px}
 details summary{cursor:pointer;font-weight:600}
 .center{text-align:center;justify-items:center}
 .big{font:700 48px var(--mono);color:var(--signal)}
-#qr{background:#fff;padding:18px;border-radius:16px;display:inline-block}
-#qr svg{display:block;width:min(72vw,420px);height:auto}
-.poster h1{font-size:clamp(28px,6vw,48px)}
+#posterimg{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+#qrview .nav{justify-content:center}
+@page{size:A4;margin:0}
+@media print{
+  body{padding:0;background:#fff}
+  .wrap{max-width:none}
+  body *{visibility:hidden}
+  #posterimg,#posterimg *{visibility:visible}
+  #posterimg{position:fixed;inset:0;width:100%;height:100%;max-width:none;object-fit:contain;border-radius:0;box-shadow:none}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- ===== ГОЛОСОВАНИЕ (сюда ведёт QR) ===== -->
-  <div id="vote" hidden style="display:grid;gap:20px">
+  <!-- ===== SƏSVERMƏ (QR bura aparır) ===== -->
+  <div id="vote" class="view" hidden>
     <header>
-      <div class="eyebrow">Слепая дегустация кофе</div>
-      <h1>Оцените 4 стакана</h1>
-      <p class="lead">Попробуйте кофе из каждого стакана и поставьте оценку от 1 до 10. Потом выберите один лучший.</p>
+      <div class="eyebrow">Qəhvənin kor dequstasiyası</div>
+      <h1>4 stəkanı qiymətləndirin</h1>
+      <p class="lead">Hər stəkandakı qəhvədən dadın və 1-dən 10-a qədər qiymət verin. Sonra ən çox bəyəndiyiniz stəkanı seçin.</p>
     </header>
     <div id="vstatus" class="msg" hidden></div>
-    <div id="vform" style="display:grid;gap:20px">
+    <div id="vform" class="view">
       <section class="panel">
-        <h2>1. Оценка от 1 до 10</h2>
-        <div class="ends"><span>1 — совсем не понравилось</span><span>10 — отлично</span></div>
+        <h2>1. Qiymət: 1-dən 10-a qədər</h2>
+        <div class="ends"><span>1 — heç xoşuma gəlmədi</span><span>10 — əla</span></div>
         <div id="scores" style="display:grid;gap:22px"></div>
       </section>
       <section class="panel">
-        <h2>2. Какой стакан лучший?</h2>
-        <div class="bestgrid" id="best" role="group" aria-label="Лучший стакан"></div>
+        <h2>2. Ən yaxşı stəkan hansıdır?</h2>
+        <div class="bestgrid" id="best" role="group" aria-label="Ən yaxşı stəkan"></div>
         <div id="missing" class="note"></div>
-        <button class="btn signal" id="submit">Отправить</button>
+        <button class="btn signal" id="submit">Göndər</button>
       </section>
     </div>
     <section id="thanks" class="panel center" hidden>
       <div class="big">✓</div>
-      <h2>Спасибо, ваш голос принят</h2>
-      <p class="note">Передумали? Исправьте и отправьте ещё раз, старый голос заменится.</p>
-      <button class="btn ghost" id="edit">Изменить голос</button>
+      <h2>Təşəkkür edirik, səsiniz qəbul edildi</h2>
+      <p class="note">Fikrinizi dəyişdiniz? Düzəldib yenidən göndərin, köhnə səs əvəz olunacaq.</p>
+      <button class="btn ghost" id="edit">Səsimi dəyiş</button>
     </section>
   </div>
 
-  <!-- ===== ОРГАНИЗАТОР: НАСТРОЙКА ===== -->
-  <div id="setup" hidden style="display:grid;gap:20px">
+  <!-- ===== TƏŞKİLATÇI: AYARLAR ===== -->
+  <div id="setup" class="view" hidden>
     <header>
-      <div class="eyebrow">Страница организатора</div>
-      <h1>Дегустация: настройка</h1>
-      <p class="lead">Вставьте ссылку, которую дал Google (заканчивается на /exec), и ваш пароль из кода. Это нужно сделать один раз на этом устройстве.</p>
+      <div class="eyebrow">Təşkilatçı səhifəsi</div>
+      <h1>Dequstasiya: ayarlar</h1>
+      <p class="lead">Google-un verdiyi linki (sonu /exec ilə bitir) və koddakı parolunuzu daxil edin. Bu cihazda bunu bir dəfə etmək kifayətdir.</p>
     </header>
     <section class="panel">
-      <label class="f" for="api">Ссылка из Google
+      <label class="f" for="api">Google linki
         <input type="text" id="api" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
       </label>
-      <label class="f" for="key">Пароль (тот, что вы вписали в код вместо kofe2026)
+      <label class="f" for="key">Parol (kodda kofe2026 əvəzinə yazdığınız)
         <input type="text" id="key" autocomplete="off">
       </label>
       <div class="nav">
-        <button class="btn" id="go-qr">Показать QR-код</button>
-        <button class="btn ghost" id="go-res">Открыть результаты</button>
+        <button class="btn" id="go-qr">QR kodu göstər</button>
+        <button class="btn ghost" id="go-res">Nəticələri aç</button>
       </div>
       <div id="smsg" class="note"></div>
     </section>
   </div>
 
-  <!-- ===== QR ===== -->
-  <div id="qrview" class="poster" hidden style="display:grid;gap:18px;text-align:center;justify-items:center">
-    <div class="eyebrow">Слепая дегустация кофе</div>
-    <h1>Отсканируйте и оцените</h1>
-    <div id="qr"></div>
-    <p class="lead">Наведите камеру телефона на код.<br>Регистрация не нужна, займёт 1 минуту.</p>
-    <div class="nav" style="justify-content:center">
-      <button class="btn ghost small" id="back1">← Назад</button>
-      <button class="btn ghost small" id="copylink">Скопировать ссылку</button>
+  <!-- ===== QR POSTER ===== -->
+  <div id="qrview" class="view center" hidden>
+    <img id="posterimg" alt="Dequstasiya üçün QR kodlu poster">
+    <div class="nav">
+      <button class="btn" id="dl">Şəkli yüklə (PNG)</button>
+      <button class="btn ghost" id="print">Çap et</button>
+      <button class="btn ghost" id="copylink">Linki kopyala</button>
+      <button class="btn ghost" id="back1">← Geri</button>
     </div>
     <div class="note" id="linknote" style="word-break:break-all"></div>
   </div>
 
-  <!-- ===== РЕЗУЛЬТАТЫ ===== -->
-  <div id="results" hidden style="display:grid;gap:20px">
+  <!-- ===== NƏTİCƏLƏR ===== -->
+  <div id="results" class="view" hidden>
     <header>
-      <div class="eyebrow">Только для организатора</div>
-      <h1>Результаты дегустации</h1>
+      <div class="eyebrow">Yalnız təşkilatçı üçün</div>
+      <h1>Dequstasiyanın nəticələri</h1>
     </header>
     <section class="panel">
-      <div class="nav" style="justify-content:space-between"><h2>Рейтинг</h2><span class="note" id="live"></span></div>
+      <div class="nav" style="justify-content:space-between"><h2>Reytinq</h2><span class="note" id="live"></span></div>
       <div class="stats" id="stats"></div>
       <div class="rank" id="rank"></div>
       <div class="nav">
-        <button class="btn" id="reveal">Раскрыть компании</button>
-        <button class="btn ghost" id="copy">Скопировать отчёт</button>
-        <button class="btn ghost" id="back2">← Назад</button>
+        <button class="btn" id="reveal">Şirkətləri göstər</button>
+        <button class="btn ghost" id="copy">Hesabatı kopyala</button>
+        <button class="btn ghost" id="back2">← Geri</button>
       </div>
       <div class="note" id="copynote"></div>
       <textarea id="copyfallback" hidden readonly style="min-height:140px;font:12px var(--mono);width:100%"></textarea>
-      <details><summary>Все голоса</summary><div class="tablewrap" style="margin-top:10px"><table id="ballots"></table></div></details>
-      <p class="note">Названия компаний берутся из Google Таблицы, лист «Brands».</p>
+      <details><summary>Bütün səslər</summary><div class="tablewrap" style="margin-top:10px"><table id="ballots"></table></div></details>
+      <p class="note">Şirkət adları Google Cədvəlindən, «Brands» vərəqindən götürülür.</p>
     </section>
   </div>
 </div>
@@ -2480,7 +2488,7 @@ const urlToId=u=>{const m=String(u).trim().match(/\/macros\/s\/([A-Za-z0-9_-]+)\
 const views=["vote","setup","qrview","results"];
 function show(v){views.forEach(x=>$(x).hidden=x!==v);window.scrollTo(0,0)}
 
-/* ================= ГОЛОСОВАНИЕ ================= */
+/* ================= SƏSVERMƏ ================= */
 const params=new URLSearchParams(location.search);
 const voteId=params.get("id");
 let device=ls.get("device");
@@ -2492,105 +2500,178 @@ const save=()=>ls.set("draft3",JSON.stringify(draft));
 function renderVote(){
   const y=window.scrollY;
   $("scores").innerHTML=CUPS.map(c=>`<div class="cupcard"><div class="lid">${c}</div>
-    <b>Стакан ${c}${draft.scores[c]?` — <span style="color:var(--signal)">${draft.scores[c]}</span>`:""}</b>
-    <div class="scale" data-c="${c}">${Array.from({length:10},(_,i)=>`<button aria-pressed="${draft.scores[c]===i+1}" data-v="${i+1}" aria-label="Стакан ${c}: ${i+1}">${i+1}</button>`).join("")}</div></div>`).join("");
+    <b>Stəkan ${c}${draft.scores[c]?` — <span style="color:var(--signal)">${draft.scores[c]}</span>`:""}</b>
+    <div class="scale" data-c="${c}">${Array.from({length:10},(_,i)=>`<button aria-pressed="${draft.scores[c]===i+1}" data-v="${i+1}" aria-label="Stəkan ${c}: ${i+1}">${i+1}</button>`).join("")}</div></div>`).join("");
   $("scores").querySelectorAll(".scale").forEach(s=>s.querySelectorAll("button").forEach(b=>b.onclick=()=>{draft.scores[s.dataset.c]=+b.dataset.v;save();renderVote()}));
-  $("best").innerHTML=CUPS.map(c=>`<button class="cup" aria-pressed="${draft.best===c}" data-v="${c}" aria-label="Лучший: стакан ${c}">${c}</button>`).join("");
+  $("best").innerHTML=CUPS.map(c=>`<button class="cup" aria-pressed="${draft.best===c}" data-v="${c}" aria-label="Ən yaxşı: stəkan ${c}">${c}</button>`).join("");
   $("best").querySelectorAll("button").forEach(b=>b.onclick=()=>{draft.best=b.dataset.v;save();renderVote()});
   const miss=CUPS.filter(c=>!draft.scores[c]),parts=[];
-  if(miss.length)parts.push("оцените стакан"+(miss.length>1?"ы ":" ")+miss.join(", "));
-  if(!draft.best)parts.push("выберите лучший стакан");
-  $("missing").textContent=parts.length?"Осталось: "+parts.join("; ")+".":"Всё готово, можно отправлять.";
+  if(miss.length)parts.push("qiymət verilməyib: stəkan "+miss.join(", "));
+  if(!draft.best)parts.push("ən yaxşı stəkanı seçin");
+  $("missing").textContent=parts.length?"Qalıb: "+parts.join("; ")+".":"Hər şey hazırdır, göndərə bilərsiniz.";
   $("submit").disabled=!!parts.length;
   window.scrollTo(0,y);
 }
 function vstatus(t,err){const s=$("vstatus");s.hidden=!t;s.textContent=t||"";s.className="msg"+(err?" err":"")}
 $("submit").onclick=async()=>{
-  $("submit").disabled=true;$("submit").textContent="Отправляю…";vstatus("");
+  $("submit").disabled=true;$("submit").textContent="Göndərilir…";vstatus("");
   try{
     const r=await fetch(idToUrl(voteId),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
       body:JSON.stringify({action:"vote",device,ballot:{scores:draft.scores,best:draft.best}})});
     const j=await r.json();if(!j.ok)throw 0;
     ls.set("sent","1");$("vform").hidden=true;$("thanks").hidden=false;window.scrollTo(0,0);
-  }catch(e){vstatus("Не удалось отправить. Проверьте интернет и нажмите ещё раз.",true)}
-  finally{$("submit").textContent="Отправить";renderVote()}
+  }catch(e){vstatus("Göndərmək alınmadı. İnterneti yoxlayın və yenidən basın.",true)}
+  finally{$("submit").textContent="Göndər";renderVote()}
 };
 $("edit").onclick=()=>{$("thanks").hidden=true;$("vform").hidden=false;window.scrollTo(0,0)};
 
-/* ================= ОРГАНИЗАТОР ================= */
+/* ================= TƏŞKİLATÇI ================= */
 let apiId=ls.get("apiId")||"", key=ls.get("key")||"";
 $("api").value=apiId?idToUrl(apiId):""; $("key").value=key;
 function readSetup(){
   const id=urlToId($("api").value);
-  if(!id){$("smsg").textContent="Ссылка не похожа на ссылку Google. Она должна начинаться с https://script.google.com/macros/s/ и заканчиваться на /exec";return false}
+  if(!id){$("smsg").textContent="Bu link Google linkinə oxşamır. O, https://script.google.com/macros/s/ ilə başlamalı və /exec ilə bitməlidir.";return false}
   apiId=id;key=$("key").value.trim();ls.set("apiId",apiId);ls.set("key",key);$("smsg").textContent="";return true;
 }
 const voteLink=()=>location.origin+location.pathname+"?id="+apiId;
-$("go-qr").onclick=()=>{
+
+/* ---------- Poster (A4, 2480×3508 px = 300 dpi) ---------- */
+function bean(ctx,x,y,r,rot,col){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+  ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(0,0,r,r*0.68,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="rgba(20,10,4,.55)";ctx.lineWidth=r*0.12;ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(-r*0.8,0);ctx.bezierCurveTo(-r*0.3,-r*0.28,r*0.3,r*0.28,r*0.8,0);ctx.stroke();
+  ctx.restore();
+}
+function spaced(ctx,text,x,y,sp){ // letter-spaced, centered
+  const chars=[...text];const w=chars.reduce((s,c)=>s+ctx.measureText(c).width,0)+sp*(chars.length-1);
+  let cx=x-w/2;ctx.textAlign="left";chars.forEach(c=>{ctx.fillText(c,cx,y);cx+=ctx.measureText(c).width+sp});ctx.textAlign="center";
+}
+async function makePoster(link){
+  try{await Promise.all(["700 120px Unbounded","500 60px Onest","700 60px Onest","700 80px 'JetBrains Mono'"].map(f=>document.fonts.load(f,"Əə Ğğ İı Şş 1234")))}catch(e){}
+  const W=2480,H=3508,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const ctx=cv.getContext("2d");
+  const ROAST="#2A1A10",ROAST2="#4A2E1C",CREMA="#D49A5C",FOAM="#F6EBDD",CREAM="#F3E6D3";
+  // background
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#1E120A");g.addColorStop(.55,ROAST);g.addColorStop(1,"#3A2416");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // coffee-ring stains
+  [[2150,420,330,.10],[260,3050,420,.08],[2300,3200,240,.07]].forEach(([x,y,r,a])=>{
+    ctx.strokeStyle=`rgba(212,154,92,${a})`;
+    for(let k=0;k<3;k++){ctx.lineWidth=18-k*5;ctx.beginPath();ctx.arc(x+k*9,y-k*6,r-k*14,0.2+k*.4,Math.PI*1.85+k*.3);ctx.stroke()}
+  });
+  // beans
+  [[210,330,90,.6],[420,520,62,-.4],[2270,1050,80,1.1],[2080,1220,54,.3],[180,1900,70,-.9],[2330,2350,96,.7],[330,2650,58,1.4],[2050,2860,66,-.2]]
+    .forEach(([x,y,r,rot])=>bean(ctx,x,y,r,rot,"rgba(122,74,40,.55)"));
+  // header
+  ctx.fillStyle=CREMA;ctx.textBaseline="alphabetic";ctx.textAlign="center";
+  ctx.font="700 64px Onest, sans-serif";spaced(ctx,"QƏHVƏNİN KOR DEQUSTASİYASI",W/2,300,14);
+  ctx.fillStyle=CREAM;ctx.font="700 168px Unbounded, Onest, sans-serif";
+  ctx.fillText("Skan edin",W/2,530);ctx.fillText("və qiymətləndirin",W/2,730);
+  // cup seen from above: saucer, cup, crema
+  const cx=W/2,cy=1680;
+  ctx.fillStyle="rgba(246,235,221,.08)";ctx.beginPath();ctx.arc(cx,cy,860,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="rgba(246,235,221,.18)";ctx.lineWidth=6;ctx.beginPath();ctx.arc(cx,cy,860,0,Math.PI*2);ctx.stroke();
+  // handle
+  ctx.fillStyle=FOAM;ctx.beginPath();ctx.ellipse(cx+760,cy,170,95,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#1E120A";ctx.beginPath();ctx.ellipse(cx+790,cy,95,45,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=FOAM;ctx.beginPath();ctx.arc(cx,cy,720,0,Math.PI*2);ctx.fill();
+  const cg=ctx.createRadialGradient(cx-120,cy-140,60,cx,cy,640);cg.addColorStop(0,"#E7B57C");cg.addColorStop(.6,CREMA);cg.addColorStop(1,"#9A5E2E");
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,640,0,Math.PI*2);ctx.fill();
+  // QR card
+  const q=qrcode(0,"M");q.addData(link);q.make();
+  const n=q.getModuleCount(),card=860,pad=56,cell=Math.floor((card-pad*2)/n),qs=cell*n,x0=cx-card/2,y0=cy-card/2;
+  ctx.fillStyle="#FFFFFF";ctx.beginPath();ctx.roundRect(x0,y0,card,card,48);ctx.fill();
+  ctx.fillStyle="#1E120A";const qx=cx-qs/2,qy=cy-qs/2;
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))ctx.fillRect(qx+c*cell,qy+r*cell,cell,cell);
+  // cups 1-4
+  const ly=2770,gap=330;ctx.font="700 120px 'JetBrains Mono', monospace";
+  CUPS.forEach((c,i)=>{const x=cx+(i-1.5)*gap;
+    ctx.fillStyle=FOAM;ctx.beginPath();ctx.arc(x,ly,128,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=ROAST2;ctx.beginPath();ctx.arc(x,ly,108,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=CREAM;ctx.textBaseline="middle";ctx.fillText(c,x,ly+6);});
+  ctx.textBaseline="alphabetic";
+  // steps
+  ctx.fillStyle=CREAM;ctx.font="600 80px Onest, sans-serif";
+  ctx.fillText("Dadın  ·  1–10 qiymət verin  ·  Ən yaxşısını seçin",W/2,3080);
+  ctx.fillStyle="rgba(243,230,211,.62)";ctx.font="500 58px Onest, sans-serif";
+  ctx.fillText("Telefonun kamerasını koda tutun. Qeydiyyat lazım deyil, 1 dəqiqə çəkir.",W/2,3200);
+  ctx.fillStyle=CREMA;ctx.fillRect(W/2-90,3320,180,10);
+  return cv;
+}
+let posterCanvas=null;
+$("go-qr").onclick=async()=>{
   if(!readSetup())return;
-  const q=qrcode(0,"M");q.addData(voteLink());q.make();
-  $("qr").innerHTML=q.createSvgTag({cellSize:8,margin:0,scalable:true});
-  $("linknote").textContent=voteLink();
+  $("smsg").textContent="Poster hazırlanır…";
+  posterCanvas=await makePoster(voteLink());
+  $("posterimg").src=posterCanvas.toDataURL("image/png");
+  $("linknote").textContent=voteLink();$("smsg").textContent="";
   show("qrview");
 };
-$("copylink").onclick=async()=>{try{await navigator.clipboard.writeText(voteLink());$("linknote").textContent="Ссылка скопирована: "+voteLink()}catch(e){}};
+$("dl").onclick=()=>{
+  if(!posterCanvas)return;
+  const a=document.createElement("a");a.download="degustasiya-qr-poster.png";a.href=posterCanvas.toDataURL("image/png");
+  document.body.appendChild(a);a.click();a.remove();
+};
+$("print").onclick=()=>window.print();
+$("copylink").onclick=async()=>{try{await navigator.clipboard.writeText(voteLink());$("linknote").textContent="Link kopyalandı: "+voteLink()}catch(e){}};
 $("back1").onclick=()=>show("setup");
 $("back2").onclick=()=>{clearInterval(timer);show("setup")};
 
-/* ================= РЕЗУЛЬТАТЫ ================= */
+/* ================= NƏTİCƏLƏR ================= */
 let ballots=[],brands={},revealed=false,timer=null;
 async function load(){
   const r=await fetch(idToUrl(apiId)+"?action=results&key="+encodeURIComponent(key));
   const j=await r.json();
   if(!j.ok)throw new Error(j.error||"error");
   ballots=(j.ballots||[]).filter(b=>b.scores);brands=j.brands||{};
-  $("live").textContent="обновлено "+new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  $("live").textContent="yeniləndi "+new Date().toLocaleTimeString("az-AZ",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   renderRes();
 }
 $("go-res").onclick=async()=>{
   if(!readSetup())return;
-  $("smsg").textContent="Загружаю…";
-  try{await load();show("results");clearInterval(timer);timer=setInterval(()=>load().catch(()=>{$("live").textContent="нет связи, повторю"}),10000)}
-  catch(e){$("smsg").textContent=e.message==="key"?"Неверный пароль. Введите тот, что вписали в код в Google.":"Google не отвечает. Проверьте ссылку и что при публикации выбран доступ «Все»."}
+  $("smsg").textContent="Yüklənir…";
+  try{await load();$("smsg").textContent="";show("results");clearInterval(timer);timer=setInterval(()=>load().catch(()=>{$("live").textContent="əlaqə yoxdur, yenidən cəhd ediləcək"}),10000)}
+  catch(e){$("smsg").textContent=e.message==="key"?"Parol səhvdir. Google-dakı koda yazdığınız parolu daxil edin.":"Google cavab vermir. Linki yoxlayın və yayımlayarkən girişin «Hamı» (Anyone) seçildiyinə əmin olun."}
 };
 const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
 const f1=v=>v==null?"—":v.toFixed(1);
-const label=c=>revealed&&brands[c]?brands[c]:"Стакан "+c;
+const label=c=>revealed&&brands[c]?brands[c]:"Stəkan "+c;
 function compute(){
   return CUPS.map(c=>({c,score:avg(ballots.map(b=>b.scores[c]).filter(v=>typeof v==="number")),best:ballots.filter(b=>b.best===c).length}))
     .sort((a,b)=>(b.score??-1)-(a.score??-1)||b.best-a.best);
 }
 function renderRes(){
   const rows=compute(),N=ballots.length;
-  $("stats").innerHTML=`<div><b>${N}</b>голосов</div><div><b>4</b>стакана</div><div><b>1–10</b>шкала</div>`;
+  $("stats").innerHTML=`<div><b>${N}</b>səs</div><div><b>4</b>stəkan</div><div><b>1–10</b>şkala</div>`;
   $("rank").innerHTML=N?rows.map((r,i)=>`<div class="row ${i===0?"first":""}"><div class="lid">${r.c}</div>
-    <div class="who"><b>${i+1}. ${esc(label(r.c))}</b><span>Выбрали лучшим: ${r.best} из ${N} (${Math.round(r.best/N*100)}%)</span>
+    <div class="who"><b>${i+1}. ${esc(label(r.c))}</b><span>Ən yaxşı kimi seçildi: ${r.best} / ${N} (${Math.round(r.best/N*100)}%)</span>
     <div class="bar"><i style="width:${(r.score||0)*10}%"></i></div></div>
-    <div class="score">${f1(r.score)}<small>средняя из 10</small></div></div>`).join("")
-    :`<p class="note">Голосов пока нет. Страница обновляется сама каждые 10 секунд.</p>`;
-  $("reveal").textContent=revealed?"Скрыть компании":"Раскрыть компании";
+    <div class="score">${f1(r.score)}<small>orta, 10-dan</small></div></div>`).join("")
+    :`<p class="note">Hələ səs yoxdur. Səhifə hər 10 saniyədən bir özü yenilənir.</p>`;
+  $("reveal").textContent=revealed?"Şirkətləri gizlət":"Şirkətləri göstər";
   $("reveal").disabled=!CUPS.some(c=>brands[c]);
-  $("ballots").innerHTML=`<tr><th>#</th>${CUPS.map(c=>`<th>${esc(label(c))}</th>`).join("")}<th>Лучший</th><th></th></tr>`+
+  $("ballots").innerHTML=`<tr><th>#</th>${CUPS.map(c=>`<th>${esc(label(c))}</th>`).join("")}<th>Ən yaxşı</th><th></th></tr>`+
     ballots.map((b,i)=>`<tr><td>${i+1}</td>${CUPS.map(c=>`<td>${b.scores[c]??"—"}</td>`).join("")}<td>${esc(b.best?label(b.best):"—")}</td>
-    <td><button class="btn ghost small" data-del="${esc(b.device)}" data-step="0">Удалить</button></td></tr>`).join("");
+    <td><button class="btn ghost small" data-del="${esc(b.device)}" data-step="0">Sil</button></td></tr>`).join("");
   $("ballots").querySelectorAll("[data-del]").forEach(btn=>btn.onclick=async()=>{
-    if(btn.dataset.step==="0"){btn.dataset.step="1";btn.textContent="Точно удалить?";return}
+    if(btn.dataset.step==="0"){btn.dataset.step="1";btn.textContent="Silinsin?";return}
     btn.disabled=true;
     try{const r=await fetch(idToUrl(apiId)+"?action=delete&key="+encodeURIComponent(key)+"&device="+encodeURIComponent(btn.dataset.del));const j=await r.json();if(!j.ok)throw 0;await load()}
-    catch(e){btn.disabled=false;btn.textContent="Ошибка"}
+    catch(e){btn.disabled=false;btn.textContent="Xəta"}
   });
 }
 $("reveal").onclick=()=>{revealed=!revealed;renderRes()};
 $("copy").onclick=async()=>{
   const rows=compute(),N=ballots.length;
-  let t=`Слепая дегустация кофе — ${new Date().toLocaleDateString("ru-RU")}\nГолосов: ${N}. Оценка 1–10 и выбор лучшего стакана.\n\n`;
-  rows.forEach((r,i)=>{t+=`${i+1}. ${brands[r.c]?brands[r.c]+" (стакан "+r.c+")":"Стакан "+r.c} — средняя ${f1(r.score)}/10; выбрали лучшим: ${r.best} из ${N}\n`});
-  try{await navigator.clipboard.writeText(t);$("copynote").textContent="Отчёт скопирован. Вставьте его в письмо или WhatsApp.";$("copyfallback").hidden=true}
-  catch(e){const ta=$("copyfallback");ta.hidden=false;ta.value=t;ta.select();$("copynote").textContent="Выделите текст ниже и скопируйте."}
+  let t=`Qəhvənin kor dequstasiyası — ${new Date().toLocaleDateString("az-AZ")}\nSəs sayı: ${N}. 1–10 qiymət və ən yaxşı stəkanın seçimi.\n\n`;
+  rows.forEach((r,i)=>{t+=`${i+1}. ${brands[r.c]?brands[r.c]+" (stəkan "+r.c+")":"Stəkan "+r.c} — orta ${f1(r.score)}/10; ən yaxşı kimi seçildi: ${r.best} / ${N}\n`});
+  try{await navigator.clipboard.writeText(t);$("copynote").textContent="Hesabat kopyalandı. Məktuba və ya WhatsApp-a yapışdırın.";$("copyfallback").hidden=true}
+  catch(e){const ta=$("copyfallback");ta.hidden=false;ta.value=t;ta.select();$("copynote").textContent="Aşağıdakı mətni seçib kopyalayın."}
 };
 
-/* ================= СТАРТ ================= */
-if(voteId){renderVote();show("vote");if(ls.get("sent")==="1")vstatus("С этого телефона уже отправлен голос. Новая отправка заменит его.")}
+/* ================= START ================= */
+if(voteId){renderVote();show("vote");if(ls.get("sent")==="1")vstatus("Bu telefondan artıq səs göndərilib. Yeni göndəriş onu əvəz edəcək.")}
 else show("setup");
 </script>
 </body>
