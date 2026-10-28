@@ -76,6 +76,18 @@ th{font-weight:600;color:var(--muted);font-size:12px}
 details summary{cursor:pointer;font-weight:600}
 .center{text-align:center;justify-items:center}
 .big{font:700 48px var(--mono);color:var(--signal)}
+.winner{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:18px;border-radius:14px;background:var(--roast);color:var(--bg)}
+.winner .medal{width:64px;height:64px;border-radius:50%;background:var(--crema);color:#1F1A17;display:grid;place-items:center;font:700 28px var(--mono)}
+.winner small{display:block;font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.winner b{display:block;font:700 clamp(20px,5vw,28px)/1.2 var(--display)}
+.winner span{font-size:14px;opacity:.85}
+table.place td,table.place th{font-size:14px}
+table.place td.b{font-weight:700;color:var(--roast)}
+table.place th:nth-child(2),table.place td:nth-child(2){text-align:left}
+table.place tr.top td{background:color-mix(in srgb,var(--crema) 14%,var(--surface))}
+td.pick{background:var(--signal-soft);font-weight:700}
+.legend{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.legend i{width:14px;height:14px;border-radius:4px;background:var(--signal-soft);display:inline-block}
 #posterimg{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
 #qrview .nav{justify-content:center}
 @page{size:A4;margin:0}
@@ -159,19 +171,28 @@ details summary{cursor:pointer;font-weight:600}
     <header>
       <div class="eyebrow">Yalnız təşkilatçı üçün</div>
       <h1>Dequstasiyanın nəticələri</h1>
+      <div class="nav" style="justify-content:space-between"><div class="stats" id="stats"></div><span class="note" id="live"></span></div>
     </header>
+
+    <div id="winner"></div>
+
     <section class="panel">
-      <div class="nav" style="justify-content:space-between"><h2>Reytinq</h2><span class="note" id="live"></span></div>
-      <div class="stats" id="stats"></div>
-      <div class="rank" id="rank"></div>
+      <h2>Yerlər</h2>
+      <div class="tablewrap"><table class="place" id="places"></table></div>
+      <p class="note">Ümumi bal — bütün qiymətlərin cəmi. Orta bal — bir nəfərin orta qiyməti (1–10). Yerlər orta bala görə, bərabər olduqda «ən yaxşı» seçimlərinə görə müəyyən edilir.</p>
       <div class="nav">
+        <button class="btn signal" id="excel">⬇ Excel-ə yüklə</button>
         <button class="btn" id="reveal">Şirkətləri göstər</button>
         <button class="btn ghost" id="copy">Hesabatı kopyala</button>
         <button class="btn ghost" id="back2">← Geri</button>
       </div>
       <div class="note" id="copynote"></div>
       <textarea id="copyfallback" hidden readonly style="min-height:140px;font:12px var(--mono);width:100%"></textarea>
-      <details><summary>Bütün səslər</summary><div class="tablewrap" style="margin-top:10px"><table id="ballots"></table></div></details>
+    </section>
+
+    <section class="panel">
+      <div class="nav" style="justify-content:space-between"><h2>Bütün səslər</h2><span class="legend"><i></i> ən yaxşı seçilən stəkan</span></div>
+      <div class="tablewrap"><table id="ballots"></table></div>
       <p class="note">Şirkət adları Google Cədvəlindən, «Brands» vərəqindən götürülür.</p>
     </section>
   </div>
@@ -2638,22 +2659,28 @@ const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
 const f1=v=>v==null?"—":v.toFixed(1);
 const label=c=>revealed&&brands[c]?brands[c]:"Stəkan "+c;
 function compute(){
-  return CUPS.map(c=>({c,score:avg(ballots.map(b=>b.scores[c]).filter(v=>typeof v==="number")),best:ballots.filter(b=>b.best===c).length}))
+  return CUPS.map(c=>{const v=ballots.map(b=>b.scores[c]).filter(v=>typeof v==="number");return {c,score:avg(v),sum:v.reduce((s,x)=>s+x,0),best:ballots.filter(b=>b.best===c).length}})
     .sort((a,b)=>(b.score??-1)-(a.score??-1)||b.best-a.best);
 }
 function renderRes(){
   const rows=compute(),N=ballots.length;
   $("stats").innerHTML=`<div><b>${N}</b>səs</div><div><b>4</b>stəkan</div><div><b>1–10</b>şkala</div>`;
-  $("rank").innerHTML=N?rows.map((r,i)=>`<div class="row ${i===0?"first":""}"><div class="lid">${r.c}</div>
-    <div class="who"><b>${i+1}. ${esc(label(r.c))}</b><span>Ən yaxşı kimi seçildi: ${r.best} / ${N} (${Math.round(r.best/N*100)}%)</span>
-    <div class="bar"><i style="width:${(r.score||0)*10}%"></i></div></div>
-    <div class="score">${f1(r.score)}<small>orta, 10-dan</small></div></div>`).join("")
-    :`<p class="note">Hələ səs yoxdur. Səhifə hər 10 saniyədən bir özü yenilənir.</p>`;
+  if(N){
+    const w=rows[0];
+    $("winner").innerHTML=`<div class="winner"><div class="medal">1</div><div><small>Birinci yer</small>
+      <b>${esc(label(w.c))}${revealed&&brands[w.c]?` <span>(stəkan ${w.c})</span>`:""}</b>
+      <span>Orta bal ${f1(w.score)} / 10 · ümumi bal ${w.sum} · ən yaxşı seçən ${w.best} nəfər</span></div></div>`;
+  }else $("winner").innerHTML=`<div class="panel"><p class="note" style="margin:0">Hələ səs yoxdur. Səhifə hər 10 saniyədən bir özü yenilənir.</p></div>`;
+  $("places").innerHTML=`<tr><th>Yer</th><th>Stəkan</th><th>Ümumi bal</th><th>Orta bal</th><th>Ən yaxşı seçən</th></tr>`+
+    rows.map((r,i)=>`<tr class="${i===0&&N?"top":""}"><td class="b">${i+1}</td><td>${esc(label(r.c))}</td>
+      <td class="b">${r.sum}</td><td>${f1(r.score)}</td><td>${r.best} / ${N}${N?` (${Math.round(r.best/N*100)}%)`:""}</td></tr>`).join("");
   $("reveal").textContent=revealed?"Şirkətləri gizlət":"Şirkətləri göstər";
   $("reveal").disabled=!CUPS.some(c=>brands[c]);
-  $("ballots").innerHTML=`<tr><th>#</th>${CUPS.map(c=>`<th>${esc(label(c))}</th>`).join("")}<th>Ən yaxşı</th><th></th></tr>`+
-    ballots.map((b,i)=>`<tr><td>${i+1}</td>${CUPS.map(c=>`<td>${b.scores[c]??"—"}</td>`).join("")}<td>${esc(b.best?label(b.best):"—")}</td>
-    <td><button class="btn ghost small" data-del="${esc(b.device)}" data-step="0">Sil</button></td></tr>`).join("");
+  const tm=v=>{const d=new Date(v);return isNaN(d)?"":d.toLocaleTimeString("az-AZ",{hour:"2-digit",minute:"2-digit"})};
+  $("ballots").innerHTML=N?`<tr><th>#</th><th>Vaxt</th>${CUPS.map(c=>`<th>${esc(label(c))}</th>`).join("")}<th>Ən yaxşı</th><th></th></tr>`+
+    ballots.map((b,i)=>`<tr><td>${i+1}</td><td>${tm(b.at)}</td>${CUPS.map(c=>`<td class="${b.best===c?"pick":""}">${b.scores[c]??"—"}</td>`).join("")}<td>${esc(b.best?label(b.best):"—")}</td>
+    <td><button class="btn ghost small" data-del="${esc(b.device)}" data-step="0">Sil</button></td></tr>`).join("")
+    :`<tr><td class="note">Hələ səs yoxdur.</td></tr>`;
   $("ballots").querySelectorAll("[data-del]").forEach(btn=>btn.onclick=async()=>{
     if(btn.dataset.step==="0"){btn.dataset.step="1";btn.textContent="Silinsin?";return}
     btn.disabled=true;
@@ -2665,9 +2692,97 @@ $("reveal").onclick=()=>{revealed=!revealed;renderRes()};
 $("copy").onclick=async()=>{
   const rows=compute(),N=ballots.length;
   let t=`Qəhvənin kor dequstasiyası — ${new Date().toLocaleDateString("az-AZ")}\nSəs sayı: ${N}. 1–10 qiymət və ən yaxşı stəkanın seçimi.\n\n`;
-  rows.forEach((r,i)=>{t+=`${i+1}. ${brands[r.c]?brands[r.c]+" (stəkan "+r.c+")":"Stəkan "+r.c} — orta ${f1(r.score)}/10; ən yaxşı kimi seçildi: ${r.best} / ${N}\n`});
+  rows.forEach((r,i)=>{t+=`${i+1}-ci yer: ${brands[r.c]?brands[r.c]+" (stəkan "+r.c+")":"Stəkan "+r.c} — ümumi bal ${r.sum}, orta bal ${f1(r.score)}/10, ən yaxşı seçən ${r.best} / ${N}\n`});
   try{await navigator.clipboard.writeText(t);$("copynote").textContent="Hesabat kopyalandı. Məktuba və ya WhatsApp-a yapışdırın.";$("copyfallback").hidden=true}
   catch(e){const ta=$("copyfallback");ta.hidden=false;ta.value=t;ta.select();$("copynote").textContent="Aşağıdakı mətni seçib kopyalayın."}
+};
+
+/* ===== Excel (.xlsx) — kitabxanasız ===== */
+const xesc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const colL=i=>String.fromCharCode(65+i);
+function sheetXml(rows,widths){
+  const cols=`<cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols>`;
+  const body=rows.map((r,ri)=>`<row r="${ri+1}">${(r||[]).map((c,ci)=>{
+    if(c==null)return "";
+    const o=(typeof c==="object")?c:{v:c},ref=colL(ci)+(ri+1),s=o.s?` s="${o.s}"`:"";
+    if(o.v==null||o.v==="")return o.s?`<c r="${ref}"${s}/>`:"";
+    if(typeof o.v==="number"&&isFinite(o.v))return `<c r="${ref}"${s}><v>${o.v}</v></c>`;
+    return `<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${xesc(o.v)}</t></is></c>`;
+  }).join("")}</row>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${cols}<sheetData>${body}</sheetData></worksheet>`;
+}
+const XSTYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="1"><numFmt numFmtId="164" formatCode="0.0"/></numFmts>
+<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FF3B2618"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF6B6660"/><name val="Calibri"/></font></fonts>
+<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE9DCCB"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF6E3C6"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD7EEE9"/></patternFill></fill></fills>
+<borders count="2"><border/><border><left style="thin"><color rgb="FFC9C2B8"/></left><right style="thin"><color rgb="FFC9C2B8"/></right><top style="thin"><color rgb="FFC9C2B8"/></top><bottom style="thin"><color rgb="FFC9C2B8"/></bottom></border></borders>
+<cellStyleXfs count="1"><xf/></cellStyleXfs>
+<cellXfs count="11">
+<xf/>
+<xf fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"><alignment wrapText="1" vertical="center"/></xf>
+<xf fontId="2" applyFont="1"/>
+<xf borderId="1" applyBorder="1"/>
+<xf numFmtId="164" borderId="1" applyNumberFormat="1" applyBorder="1"/>
+<xf fontId="1" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf fontId="1" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf fontId="3" applyFont="1"/>
+<xf numFmtId="9" borderId="1" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="9" fontId="1" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crcT[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zipBlob(files,type){
+  const enc=new TextEncoder(),parts=[],central=[];let off=0;
+  for(const f of files){
+    const name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);
+    h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);
+    parts.push(new Uint8Array(h.buffer),name,data);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,name.length,true);c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer),name);
+    off+=30+name.length+data.length;
+  }
+  const cd=central.reduce((s,a)=>s+a.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cd,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type});
+}
+function buildXlsx(){
+  const rows=compute(),N=ballots.length,today=new Date(),p2=n=>String(n).padStart(2,"0");
+  const name=c=>brands[c]||"Stəkan "+c;
+  const r1=[[{v:"Qəhvənin kor dequstasiyası — nəticələr",s:2}],
+    [{v:`Tarix: ${p2(today.getDate())}.${p2(today.getMonth()+1)}.${today.getFullYear()}`}],[{v:"Səs sayı: "+N}],[{v:"Qiymətləndirmə: hər stəkana 1-dən 10-a qədər bal və bir «ən yaxşı» seçim"}],[],
+    ["Yer","Brend","Stəkan №","Ümumi bal","Orta bal (1–10)","Ən yaxşı seçən (nəfər)","Ən yaxşı seçən (%)"].map(v=>({v,s:1}))];
+  rows.forEach((r,i)=>{const t=i===0&&N;
+    r1.push([{v:i+1,s:t?5:3},{v:name(r.c),s:t?5:3},{v:+r.c,s:t?5:3},{v:r.sum,s:t?5:3},{v:r.score==null?"":Math.round(r.score*100)/100,s:t?6:4},{v:r.best,s:t?5:3},{v:N?r.best/N:0,s:t?10:9}])});
+  r1.push([],[{v:"Yerlər orta bala görə müəyyən edilir; bərabər olduqda «ən yaxşı» seçimlərinin sayı nəzərə alınır. Ümumi bal — bütün qiymətlərin cəmi.",s:8}]);
+  const fmt=v=>{const d=new Date(v);return isNaN(d)?"":`${p2(d.getDate())}.${p2(d.getMonth()+1)}.${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`};
+  const r2=[[{v:"Bütün səslər",s:2}],[{v:"Yaşıl xana — həmin şəxsin ən yaxşı seçdiyi qəhvə",s:8}],[],
+    ["#","Vaxt",...CUPS.map(c=>brands[c]?`${brands[c]} (stəkan ${c})`:"Stəkan "+c),"Ən yaxşı seçim"].map(v=>({v,s:1}))];
+  ballots.forEach((b,i)=>r2.push([{v:i+1,s:3},{v:fmt(b.at),s:3},...CUPS.map(c=>({v:typeof b.scores[c]==="number"?b.scores[c]:"",s:b.best===c?7:3})),{v:b.best?name(b.best):"",s:3}]));
+  if(N)r2.push([{v:"Orta",s:5},{v:"",s:5},...CUPS.map(c=>{const r=rows.find(x=>x.c===c);return {v:r.score==null?"":Math.round(r.score*100)/100,s:6}}),{v:"",s:5}]);
+  const files=[
+    {name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`},
+    {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+    {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Nəticələr" sheetId="1" r:id="rId1"/><sheet name="Bütün səslər" sheetId="2" r:id="rId2"/></sheets></workbook>`},
+    {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+    {name:"xl/styles.xml",data:XSTYLES},
+    {name:"xl/worksheets/sheet1.xml",data:sheetXml(r1,[8,26,10,12,16,22,20])},
+    {name:"xl/worksheets/sheet2.xml",data:sheetXml(r2,[6,16,...CUPS.map(()=>22),24])}
+  ];
+  return zipBlob(files,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+$("excel").onclick=()=>{
+  try{
+    const blob=buildXlsx(),a=document.createElement("a"),d=new Date();
+    a.href=URL.createObjectURL(blob);
+    a.download=`qehve-dequstasiyasi-neticeler-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.xlsx`;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    $("copynote").textContent="Excel faylı yükləndi.";
+  }catch(e){$("copynote").textContent="Excel faylını yaratmaq alınmadı."}
 };
 
 /* ================= START ================= */
